@@ -1,41 +1,35 @@
 # 🧘 Philosophers - 42
 
 **Philosophers** es un proyecto del cursus 42 que introduce los conceptos de **concurrencia, sincronización** y **multithreading** en C.  
-Su objetivo es simular el famoso *Problema de los Filósofos Comensales*, donde varios filósofos deben comer, pensar y dormir sin caer en un **deadlock** ni en condiciones de carrera.
+Su objetivo es simular el clásico *Problema de los Filósofos Comensales*, explorando la gestión de recursos compartidos, los hilos, los procesos y la prevención de **deadlocks**.
 
 ---
 
-## 🧠 Teoría general
+## 🧠 Introducción teórica
 
 ### 🍝 El problema de los filósofos
-
 Cinco filósofos se sientan en una mesa redonda.  
-Cada uno tiene un plato y un tenedor a su lado.  
-Para comer, un filósofo necesita **dos tenedores** (el de su izquierda y el de su derecha).  
-Después de comer, deja los tenedores y **piensa o duerme**.
+Cada uno tiene un plato de espaguetis y un tenedor a su lado.  
+Para comer, un filósofo necesita **dos tenedores** (uno a su izquierda y otro a su derecha).  
+Cuando termina de comer, deja los tenedores, **piensa** y luego **duerme**.
 
-El reto consiste en **coordinar las acciones de los filósofos** para que:
+El objetivo del proyecto es garantizar que:
+- Ningún filósofo muera de hambre.
 - No se produzcan **bloqueos mutuos (deadlocks)**.
-- Ningún filósofo muera de hambre (por falta de acceso a los recursos).
+- El acceso a los recursos sea **sincronizado y eficiente**.
 
 ---
 
-### 🧵 Hilos (threads)
-
-Cada filósofo se implementa como un **hilo de ejecución independiente** (`pthread`).  
-Esto permite que varios filósofos actúen de forma concurrente, compartiendo recursos globales.
-
-Ventajas de los threads:
-- Comparten la misma memoria.
-- Son más rápidos que los procesos.
-- Necesitan **sincronización** para evitar errores.
+### 🧵 Hilos y concurrencia
+En la versión mandatoria, cada filósofo es un **hilo (thread)**.  
+Todos los hilos comparten la misma memoria, por lo que se necesita un mecanismo que evite que accedan al mismo recurso simultáneamente.  
+Ahí es donde entran los **mutex** (bloqueos de exclusión mutua).
 
 ---
 
-### 🔒 Mutex (Exclusión mutua)
-
-Los **mutex** (Mutual Exclusion Locks) evitan que dos hilos accedan a una sección crítica al mismo tiempo.  
-En este proyecto, cada tenedor se representa por un mutex.
+### 🔒 Mutex
+Un **mutex** es un tipo de variable que actúa como un "candado" sobre una sección de código o recurso.  
+En este proyecto, cada tenedor se representa por un `pthread_mutex_t`.
 
 Ejemplo:
 ```c
@@ -44,64 +38,58 @@ eat();
 pthread_mutex_unlock(&fork);
 ```
 
-Esto garantiza que solo un filósofo pueda usar el tenedor a la vez.
+De esta forma, solo un filósofo puede usar el tenedor al mismo tiempo.
 
 ---
 
 ### 💀 Deadlocks
+Un **deadlock** ocurre cuando varios hilos quedan bloqueados esperando un recurso que nunca se libera.
 
-Un **deadlock** ocurre cuando varios hilos esperan indefinidamente que otro libere un recurso.
+**Ejemplo típico:**
+1. Cada filósofo toma su tenedor izquierdo.
+2. Todos esperan el derecho.
+3. Ninguno puede avanzar.
 
-Ejemplo típico:
-1. Cada filósofo toma el tenedor de su izquierda.
-2. Todos esperan el tenedor de su derecha.
-3. Ninguno puede continuar → el programa se bloquea.
-
-🧩 **Solución:**  
-- Cambiar el orden de toma de tenedores.  
-- Hacer que un filósofo tome primero el derecho y luego el izquierdo.  
-- Limitar el número de filósofos que comen simultáneamente.
+🧩 **Soluciones comunes:**
+- Alternar el orden en el que los filósofos toman los tenedores.
+- Restringir el número de filósofos que comen simultáneamente.
+- Usar un semáforo global de acceso a los tenedores.
 
 ---
 
-### ⏱️ Sincronización y tiempo
-
-Cada filósofo tiene asociado:
+### ⏱️ Control del tiempo
+El proyecto requiere una gestión de tiempo muy precisa en milisegundos:
 - `time_to_die` → tiempo máximo sin comer antes de morir.  
-- `time_to_eat` → duración de la acción de comer.  
-- `time_to_sleep` → duración del descanso.  
+- `time_to_eat` → tiempo que tarda en comer.  
+- `time_to_sleep` → tiempo que duerme antes de volver a pensar.
 
-El programa debe controlar estos tiempos **con precisión milisegundo**, utilizando funciones como `gettimeofday()` o `usleep()`.
+Para ello se usan funciones como `gettimeofday()` o `usleep()`.
 
 ---
 
-## ⚙️ Instalación y compilación
+## ⚙️ Compilación e instalación
 
 ### 🔧 Requisitos
 - Sistema operativo: Linux o macOS  
-- Compilador compatible con pthread (`gcc` o `clang`)  
-- `make`
+- Compilador compatible con `pthread` (`gcc` o `clang`)  
+- Utilidad `make`
 
 ### 🏗️ Compilación
-
 ```bash
 make
 ```
 
 Genera el ejecutable principal:
-
 ```bash
 ./philo
 ```
 
 Versión **bonus** (procesos + semáforos):
-
 ```bash
 make bonus
 ```
 
 ### 🧹 Limpieza
-
 ```bash
 make clean
 make fclean
@@ -110,16 +98,13 @@ make re
 
 ---
 
-## 💡 Uso
-
-### 📘 Sintaxis
+## 💡 Uso y parámetros
 
 ```bash
 ./philo number_of_philosophers time_to_die time_to_eat time_to_sleep [number_of_meals]
 ```
 
-### 📋 Ejemplo
-
+Ejemplo:
 ```bash
 ./philo 5 800 200 200
 ```
@@ -129,51 +114,35 @@ make re
 - Come durante 200 ms.  
 - Duerme durante 200 ms.
 
-Con parámetro opcional:
-
-```bash
-./philo 5 800 200 200 7
-```
-
-➡️ Cada filósofo debe comer al menos 7 veces antes de que el programa finalice.
-
 ---
 
 ## 🖥️ Salida esperada
 
-Durante la ejecución, el programa imprime el estado de cada filósofo con una marca de tiempo (en milisegundos desde el inicio de la simulación):
-
-```bash
-./philo 5 800 200 200
-```
-
-**Ejemplo de salida:**
+**Ejemplo de ejecución:**
 ```
 0 1 is thinking
-0 2 is thinking
-1 3 is thinking
-2 4 is thinking
-3 5 is thinking
+1 2 is thinking
+2 3 is thinking
+3 4 is thinking
+4 5 is thinking
 5 1 has taken a fork
-5 1 has taken a fork
-6 1 is eating
-206 1 is sleeping
-406 1 is thinking
+6 1 has taken a fork
+7 1 is eating
+207 1 is sleeping
+407 1 is thinking
 ...
 802 3 died
 ```
 
 📘 **Explicación:**
-- La primera columna indica el tiempo transcurrido desde el inicio (en ms).  
-- La segunda columna es el identificador del filósofo.  
-- El texto final indica la acción actual:
-  - `is thinking` → el filósofo está pensando.  
+- La primera columna → tiempo en milisegundos desde el inicio.  
+- La segunda → número del filósofo.  
+- El texto → acción actual:
+  - `is thinking` → está pensando.  
   - `has taken a fork` → ha tomado un tenedor.  
   - `is eating` → está comiendo.  
   - `is sleeping` → está durmiendo.  
-  - `died` → el filósofo murió (fin del programa).
-
-🧩 En la **versión bonus**, la salida es la misma, pero gestionada mediante **semáforos**, garantizando que los mensajes no se solapan ni se mezclan entre procesos.
+  - `died` → ha muerto (fin del programa).
 
 ---
 
@@ -182,22 +151,20 @@ Durante la ejecución, el programa imprime el estado de cada filósofo con una m
 ```
 philo/
 ├── Makefile
-├── philo.c              → función principal y bucle general
-├── init.c               → inicialización de estructuras y mutex
-├── philo_eat.c          → lógica para comer
-├── philo_routine.c      → ciclo de vida de cada filósofo
-├── philo_monitor.c      → controla muertes y sincronización
+├── philo.c
+├── init.c
+├── philo_eat.c
+├── philo_routine.c
+├── philo_monitor.c
 ├── utils/
 │   ├── delay_utils.c
-│   ├── init_utils.c
 │   ├── print_utils.c
+│   ├── init_utils.c
 │   └── time_utils.c
-└── includes/
-    └── philo.h
+└── includes/philo.h
 ```
 
-Versión **bonus** (procesos + semáforos):
-
+Versión **bonus**:
 ```
 philo_bonus/
 ├── philo_bonus.c
@@ -210,82 +177,120 @@ philo_bonus/
 
 ---
 
-## 🔄 Diagrama – Ciclo de vida de un filósofo
-
+## 🔄 Diagrama – Flujo Mandatorio (threads + mutex)
 ```mermaid
 flowchart TD
-    A([Inicio del filósofo]) --> B[Pensar 🤔]
-    B --> C[Tomar tenedor izquierdo 🍴]
-    C --> D[Tomar tenedor derecho 🍴]
-    D --> E[Comer 🍝]
-    E --> F[Soltar ambos tenedores]
-    F --> G[Dormir 😴]
-    G --> B
-    E --> H{¿Murió?}
-    H -- Sí --> I([Fin del hilo 💀])
-    H -- No --> G
+    A([Inicio]) --> B[init() - Inicializa estructuras y mutex]
+    B --> C[create_threads() - Crea un hilo por filósofo]
+    C --> D[philo_routine() - Ciclo de vida]
+    D --> E[Tomar tenedores (mutex_lock)]
+    E --> F[Comer (actualiza tiempo)]
+    F --> G[Soltar tenedores (mutex_unlock)]
+    G --> H[Dormir y pensar]
+    D --> I[monitor() - Revisa muertes]
+    I -->|Si alguien muere| J[Finalizar programa]
+    H --> D
 ```
 
 ---
 
-## 🔁 Diagrama – Sincronización (evitando deadlocks)
-
+## 🔁 Diagrama – Flujo Bonus (processes + semáforos)
 ```mermaid
-flowchart LR
-    subgraph Mesa
-        F1["Fork 1 🔒"]:::fork
-        F2["Fork 2 🔒"]:::fork
-        F3["Fork 3 🔒"]:::fork
-        F4["Fork 4 🔒"]:::fork
-        F5["Fork 5 🔒"]:::fork
-    end
-
-    P1["Philo 1"] -->|Usa F1 y F2| E1(Eat)
-    P2["Philo 2"] -->|Usa F2 y F3| E2(Eat)
-    P3["Philo 3"] -->|Usa F3 y F4| E3(Eat)
-    P4["Philo 4"] -->|Usa F4 y F5| E4(Eat)
-    P5["Philo 5"] -->|Usa F5 y F1| E5(Eat)
-
-    classDef fork fill:#FFD580,stroke:#333,stroke-width:1px;
+flowchart TD
+    A([Inicio]) --> B[init_bonus() - Inicializa semáforos]
+    B --> C[fork() - Crea un proceso por filósofo]
+    C --> D[philo_routine_bonus() - Ciclo de vida del proceso]
+    D --> E[sem_wait(forks) - Toma tenedores]
+    E --> F[Comer (actualiza timestamp)]
+    F --> G[sem_post(forks) - Libera tenedores]
+    G --> H[Dormir y pensar]
+    D --> I[monitor_bonus() - Proceso supervisor]
+    I -->|Detecta muerte| J[Envía señales kill() a todos]
+    H --> D
 ```
 
 ---
 
-## 🧩 Bonus – Procesos y semáforos
-
-La versión **bonus** reemplaza los **threads** por **procesos** y los **mutex** por **semáforos**.
-
-### 🔸 Ventajas
-- Cada filósofo es un proceso independiente.  
-- Mejor aislamiento entre ejecuciones.  
-- Control centralizado con semáforos para sincronizar acciones.
-
-### 🔹 Semáforos utilizados
-| Semáforo | Función |
-|:-----------|:----------|
-| `forks` | Controla cuántos tenedores están disponibles. |
-| `print` | Evita que dos procesos impriman al mismo tiempo. |
-| `death` | Detecta si un filósofo muere. |
-
----
-
-## ⚙️ Complejidad y rendimiento
-
-- Cada hilo/filósofo ejecuta un bucle infinito de tres estados: **pensar → comer → dormir**.  
-- El control de tiempo y sincronización asegura que el programa sea **determinista**.  
-- Complejidad: `O(n)` por filósofo en cada ciclo de rutina.  
-- Sincronización gestionada con **mutex** (obligatorio) o **semáforos** (bonus).
+## 🧭 Diagrama – Flujo de funciones principales
+```mermaid
+flowchart TD
+    A([main()]) --> B[parse_args()]
+    B --> C[init() / init_bonus()]
+    C --> D[create_threads() / create_processes()]
+    D --> E[philo_routine()]
+    E --> F[philo_eat()]
+    F --> G[philo_sleep()]
+    G --> H[philo_think()]
+    D --> I[monitor() / monitor_bonus()]
+    I --> J[check_death()]
+    J --> K[exit_program()]
+    K --> L([Fin])
+```
 
 ---
 
-## 🧱 Normas 42
+## 🧩 Bonus – Procesos y semáforos (versión extendida)
 
-- Cumple **Norminette**.  
-- Sin **memory leaks**.  
-- Uso correcto de `pthread`, `mutex` y `sem_open`.  
-- Sin bloqueos ni condiciones de carrera.  
-- Control preciso de tiempos y mensajes sincronizados.
+En la versión bonus, cada filósofo se ejecuta en un **proceso independiente** creado con `fork()`.  
+Esto implica que cada uno tiene su propio espacio de memoria y no comparte variables globales, por lo que la sincronización se realiza exclusivamente mediante **semáforos POSIX** (`sem_open`, `sem_wait`, `sem_post`, `sem_close`).
+
+### 🧮 Funcionamiento interno
+1. El proceso principal crea un **proceso hijo** por cada filósofo.
+2. Se inicializan semáforos globales:
+   - `forks` → controla cuántos tenedores pueden tomarse.
+   - `print` → evita que se impriman mensajes simultáneos.
+   - `death` → avisa al monitor cuando un filósofo muere.
+3. Cada proceso ejecuta la rutina del filósofo: pensar → comer → dormir.
+4. Un **proceso monitor** detecta muertes y notifica al proceso principal.
+5. Si un filósofo muere, el proceso principal envía `kill()` al resto y cierra todos los semáforos.
+
+### 🔹 Ventajas
+- Aislamiento total: los procesos no comparten memoria.  
+- Evita condiciones de carrera naturales de los hilos.  
+- Fácil control de errores (cada filósofo es independiente).
+
+### ⚠️ Desventajas
+- Mayor uso de memoria y recursos del sistema.  
+- Sincronización más compleja.  
+- Dificultad para depurar y coordinar señales.
 
 ---
 
+## ⚠️ Errores comunes y cómo evitarlos
+| Problema | Causa | Solución |
+|:----------|:------|:---------|
+| **Deadlock** | Todos los filósofos toman un tenedor al mismo tiempo | Cambiar el orden o limitar la cantidad de filósofos que comen |
+| **Race condition** | Falta de protección en `printf` o actualización de tiempos | Usar `pthread_mutex_lock()` o `sem_wait()` |
+| **Tiempos inconsistentes** | `usleep()` mal calibrado o sin compensación | Usar `gettimeofday()` y ajustar diferencias |
+| **Fugas de memoria** | No liberar mutex o semáforos | Usar `pthread_mutex_destroy()` / `sem_close()` / `sem_unlink()` |
+| **Sincronización incorrecta (bonus)** | Semáforos mal cerrados o no creados globalmente | Inicializar todos con nombres únicos y `sem_unlink()` antes de crearlos |
 
+---
+
+## ⚖️ Comparativa final – Mandatory vs Bonus
+| Característica | Mandatory | Bonus |
+|:----------------|:-----------|:--------|
+| **Ejecución** | Hilos (`pthread_create`) | Procesos (`fork`) |
+| **Sincronización** | Mutex (`pthread_mutex_t`) | Semáforos (`sem_t`) |
+| **Compartición de memoria** | Sí | No |
+| **Monitorización** | Hilo supervisor | Proceso supervisor |
+| **Gestión de impresión** | Mutex `print` | Semáforo `print` |
+| **Finalización** | `pthread_join()` | Señales `kill()` |
+| **Dificultad técnica** | Media | Alta |
+| **Eficiencia** | Más rápida | Más estable y segura |
+| **Complejidad de código** | Menor | Mayor (gestión de procesos y semáforos) |
+
+---
+
+## 📚 Recursos recomendados
+- [Documentación de pthreads](https://man7.org/linux/man-pages/man7/pthreads.7.html)  
+- [Guía de semáforos POSIX](https://man7.org/linux/man-pages/man7/sem_overview.7.html)  
+- [Explicación del problema de los filósofos comensales (Wikipedia)](https://es.wikipedia.org/wiki/Problema_de_los_fil%C3%B3sofos_comensales)  
+- [Deadlocks y cómo evitarlos](https://www.geeksforgeeks.org/deadlock-in-operating-system/)  
+
+---
+
+## 👨‍💻 Autor
+**Aurodrig**  
+42 Campus  
+[https://github.com/aurodrig](https://github.com/aurodrig)

@@ -178,7 +178,7 @@ philo_bonus/
 ---
 
 ## 🔄 Diagrama – Flujo Mandatorio (threads + mutex)
-```mermaid
+```
 flowchart TD
     A([Inicio]) --> B[init() - Inicializa estructuras y mutex]
     B --> C[create_threads() - Crea un hilo por filósofo]
@@ -195,7 +195,7 @@ flowchart TD
 ---
 
 ## 🔁 Diagrama – Flujo Bonus (processes + semáforos)
-```mermaid
+```
 flowchart TD
     A([Inicio]) --> B[init_bonus() - Inicializa semáforos]
     B --> C[fork() - Crea un proceso por filósofo]
@@ -212,7 +212,7 @@ flowchart TD
 ---
 
 ## 🧭 Diagrama – Flujo de funciones principales
-```mermaid
+```
 flowchart TD
     A([main()]) --> B[parse_args()]
     B --> C[init() / init_bonus()]

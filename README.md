@@ -290,7 +290,4 @@ Esto implica que cada uno tiene su propio espacio de memoria y no comparte varia
 
 ---
 
-## 👨‍💻 Autor
-**Aurodrig**  
-42 Campus  
-[https://github.com/aurodrig](https://github.com/aurodrig)
+
